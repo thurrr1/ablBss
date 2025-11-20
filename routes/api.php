@@ -6,10 +6,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CutiController;
 
 Route::post('/pengajuan-cuti', [CutiController::class, 'ajukanCuti']);
-
-
-
-
+Route::get('/pengajuan-cuti/riwayat', [CutiController::class, 'lihatRiwayatGlobal']);
+Route::get('/pengajuan-cuti/{id}', [CutiController::class, 'lihatDetailPengajuan']);
+Route::put('/pengajuan-cuti/{id}/batal', [CutiController::class, 'batalkanPengajuan']);
+Route::post('/aktif-kembali', [CutiController::class, 'ajukanAktifKembali']);
 
 // Route untuk Registrasi User Baru
 //Route::post('/auth/register', [AuthController::class, 'register']);

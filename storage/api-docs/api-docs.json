@@ -1,0 +1,263 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "ABL BSS API Documentation",
+        "description": "Dokumentasi API untuk Pengelolaan Berhenti Sementara Studi (BSS)",
+        "contact": {
+            "email": "abl.bss@example.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://my-default-host.com",
+            "description": "Server Lokal Development"
+        }
+    ],
+    "paths": {
+        "/api/pengajuan-cuti": {
+            "post": {
+                "tags": [
+                    "Mahasiswa"
+                ],
+                "summary": "Mengajukan permohonan Cuti Akademik baru",
+                "description": "Fungsional Layanan 1: Mengajukan permohonan Cuti Akademik baru (POST /api/pengajuan-cuti)\n* @OA\\Post(\npath=\"/api/pengajuan-cuti\",\noperationId=\"ajukanCuti\",\ntags={\"Mahasiswa\"},\nsummary=\"Mengajukan permohonan Cuti Akademik baru\",",
+                "operationId": "ajukanCuti",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mahasiswa_id",
+                                    "semester_cuti",
+                                    "lama_cuti_semester",
+                                    "alasan_cuti"
+                                ],
+                                "properties": {
+                                    "mahasiswa_id": {
+                                        "description": "ID Mahasiswa yang mengajukan",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "semester_cuti": {
+                                        "description": "Semester cuti yang diajukan",
+                                        "type": "string",
+                                        "example": "Genap 2025/2026"
+                                    },
+                                    "lama_cuti_semester": {
+                                        "description": "Lama cuti dalam semester",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "alasan_cuti": {
+                                        "description": "Alasan detail pengajuan cuti",
+                                        "type": "string",
+                                        "example": "Mengambil magang di luar kota."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Pengajuan cuti berhasil dibuat. Menunggu verifikasi PA."
+                    },
+                    "422": {
+                        "description": "Validasi data gagal (misal: mahasiswa_id tidak valid)."
+                    }
+                }
+            }
+        },
+        "/api/pengajuan-cuti/{id}": {
+            "get": {
+                "tags": [
+                    "Mahasiswa"
+                ],
+                "summary": "Melihat detail status satu permohonan Cuti",
+                "description": "Fungsional Layanan 2: Melihat detail status satu permohonan Cuti Akademik (GET /api/pengajuan-cuti/{id})",
+                "operationId": "lihatDetailPengajuan",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Pengajuan Cuti",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail pengajuan cuti berhasil diambil."
+                    },
+                    "404": {
+                        "description": "Detail pengajuan cuti tidak ditemukan."
+                    }
+                }
+            }
+        },
+        "/api/pengajuan-cuti/riwayat": {
+            "get": {
+                "tags": [
+                    "Mahasiswa"
+                ],
+                "summary": "Melihat seluruh riwayat pengajuan Cuti Mahasiswa yang bersangkutan",
+                "description": "Fungsional Layanan 3: Melihat seluruh riwayat pengajuan Cuti Mahasiswa (GET /api/pengajuan-cuti/riwayat?mahasiswa_id=X)",
+                "operationId": "lihatRiwayatMahasiswa",
+                "parameters": [
+                    {
+                        "name": "mahasiswa_id",
+                        "in": "query",
+                        "description": "ID Mahasiswa (Simulasi Auth::id())",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Riwayat pengajuan cuti berhasil diambil."
+                    },
+                    "404": {
+                        "description": "Riwayat tidak ditemukan."
+                    },
+                    "422": {
+                        "description": "Validasi data gagal."
+                    }
+                }
+            }
+        },
+        "/api/pengajuan-cuti/{id}/batal": {
+            "put": {
+                "tags": [
+                    "Mahasiswa"
+                ],
+                "summary": "Membatalkan pengajuan cuti yang masih Pending PA",
+                "description": "Fungsional Layanan 4: Membatalkan pengajuan Cuti Akademik (PUT /api/pengajuan-cuti/{id}/batal)",
+                "operationId": "batalkanPengajuan",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Pengajuan Cuti",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mahasiswa_id"
+                                ],
+                                "properties": {
+                                    "mahasiswa_id": {
+                                        "description": "ID Mahasiswa yang melakukan pembatalan",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Pengajuan cuti berhasil dibatalkan."
+                    },
+                    "400": {
+                        "description": "Pengajuan tidak dapat dibatalkan karena statusnya sudah berubah."
+                    },
+                    "403": {
+                        "description": "Forbidden: Anda tidak berhak membatalkan pengajuan ini."
+                    }
+                }
+            }
+        },
+        "/api/aktif-kembali": {
+            "post": {
+                "tags": [
+                    "Mahasiswa"
+                ],
+                "summary": "Mengajukan permohonan untuk Aktif Kembali setelah masa cuti",
+                "description": "Fungsional Layanan 5: Mengajukan permohonan untuk Aktif Kembali (POST /api/aktif-kembali)",
+                "operationId": "ajukanAktifKembali",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "pengajuan_id",
+                                    "semester_aktif"
+                                ],
+                                "properties": {
+                                    "pengajuan_id": {
+                                        "description": "ID Pengajuan cuti yang terkait",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "semester_aktif": {
+                                        "description": "Semester yang diajukan untuk aktif kembali",
+                                        "type": "string",
+                                        "example": "Gasal 2026/2027"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Permintaan aktif kembali berhasil diajukan. Menunggu verifikasi BAAK."
+                    },
+                    "400": {
+                        "description": "Pengajuan cuti belum disetujui atau sudah kadaluarsa."
+                    }
+                }
+            }
+        },
+        "/api/admin/semua-pengajuan": {
+            "get": {
+                "tags": [
+                    "Admin Global"
+                ],
+                "summary": "Melihat seluruh riwayat pengajuan cuti semua Mahasiswa (Akses Admin)",
+                "description": "Fungsional Layanan Global: Melihat seluruh riwayat pengajuan cuti (Semua Mahasiswa)\nEndpoint: GET /api/admin/semua-pengajuan",
+                "operationId": "lihatRiwayatGlobal",
+                "responses": {
+                    "200": {
+                        "description": "Seluruh riwayat pengajuan cuti berhasil diambil."
+                    },
+                    "404": {
+                        "description": "Belum ada data pengajuan cuti di database."
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Mahasiswa",
+            "description": "Fungsional Layanan untuk Pengajuan Cuti Mahasiswa"
+        },
+        {
+            "name": "Admin Global",
+            "description": "Fungsional Layanan untuk Laporan Global Admin"
+        }
+    ]
+}
