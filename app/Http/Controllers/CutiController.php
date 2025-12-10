@@ -34,7 +34,7 @@ class CutiController extends Controller
 {
     /**
      * Fungsional Layanan 1: Mengajukan permohonan Cuti Akademik baru (POST /api/pengajuan-cuti)
-     * * @OA\Post(
+     * @OA\Post(
      * path="/api/pengajuan-cuti",
      * operationId="ajukanCuti",
      * tags={"Mahasiswa"},
@@ -150,18 +150,19 @@ class CutiController extends Controller
     }
 
     /**
-     * Fungsional Layanan 3: Melihat seluruh riwayat pengajuan Cuti Mahasiswa (GET /api/pengajuan-cuti/riwayat?mahasiswa_id=X)
+     * Fungsional Layanan 3: Melihat seluruh riwayat pengajuan Cuti Mahasiswa (GET /api/pengajuan-cuti/riwayat/{mahasiswaId})
+     * FUNGSI INI SUDAH DIPERBAIKI MENGGUNAKAN PARAMETER ROUTE
      *
      * @OA\Get(
-     * path="/api/pengajuan-cuti/riwayat",
+     * path="/api/pengajuan-cuti/riwayat/{mahasiswaId}",
      * operationId="lihatRiwayatMahasiswa",
      * tags={"Mahasiswa"},
      * summary="Melihat seluruh riwayat pengajuan Cuti Mahasiswa yang bersangkutan",
      * @OA\Parameter(
-     * name="mahasiswa_id",
-     * in="query",
+     * name="mahasiswaId",
+     * in="path",
      * required=true,
-     * description="ID Mahasiswa (Simulasi Auth::id())",
+     * description="ID Mahasiswa (diambil dari URL)",
      * @OA\Schema(type="integer", example=1)
      * ),
      * @OA\Response(
@@ -171,19 +172,12 @@ class CutiController extends Controller
      * @OA\Response(
      * response=404,
      * description="Riwayat tidak ditemukan.",
-     * ),
-     * @OA\Response(
-     * response=422,
-     * description="Validasi data gagal.",
      * )
      * )
      */
-    public function lihatRiwayatSemua(Request $request)
+    public function lihatRiwayatMahasiswa($mahasiswaId)
     {
-        // Validasi: Wajib ada mahasiswa_id
-        $request->validate(['mahasiswa_id' => 'required|integer|exists:Mahasiswa,id']);
-        $mahasiswaId = $request->mahasiswa_id;
-
+        // Langsung menggunakan ID Mahasiswa dari Route Parameter
         $riwayat = PengajuanCuti::where('mahasiswa_id', $mahasiswaId)
             ->with(['mahasiswa:id,nim,nama,prodi', 'logAktivitas']) 
             ->orderBy('tanggal_pengajuan', 'desc') 

@@ -21,7 +21,7 @@
                     "Mahasiswa"
                 ],
                 "summary": "Mengajukan permohonan Cuti Akademik baru",
-                "description": "Fungsional Layanan 1: Mengajukan permohonan Cuti Akademik baru (POST /api/pengajuan-cuti)\n* @OA\\Post(\npath=\"/api/pengajuan-cuti\",\noperationId=\"ajukanCuti\",\ntags={\"Mahasiswa\"},\nsummary=\"Mengajukan permohonan Cuti Akademik baru\",",
+                "description": "Fungsional Layanan 1: Mengajukan permohonan Cuti Akademik baru (POST /api/pengajuan-cuti)",
                 "operationId": "ajukanCuti",
                 "requestBody": {
                     "required": true,
@@ -101,19 +101,19 @@
                 }
             }
         },
-        "/api/pengajuan-cuti/riwayat": {
+        "/api/pengajuan-cuti/riwayat/{mahasiswaId}": {
             "get": {
                 "tags": [
                     "Mahasiswa"
                 ],
                 "summary": "Melihat seluruh riwayat pengajuan Cuti Mahasiswa yang bersangkutan",
-                "description": "Fungsional Layanan 3: Melihat seluruh riwayat pengajuan Cuti Mahasiswa (GET /api/pengajuan-cuti/riwayat?mahasiswa_id=X)",
+                "description": "Fungsional Layanan 3: Melihat seluruh riwayat pengajuan Cuti Mahasiswa (GET /api/pengajuan-cuti/riwayat/{mahasiswaId})\nFUNGSI INI SUDAH DIPERBAIKI MENGGUNAKAN PARAMETER ROUTE",
                 "operationId": "lihatRiwayatMahasiswa",
                 "parameters": [
                     {
-                        "name": "mahasiswa_id",
-                        "in": "query",
-                        "description": "ID Mahasiswa (Simulasi Auth::id())",
+                        "name": "mahasiswaId",
+                        "in": "path",
+                        "description": "ID Mahasiswa (diambil dari URL)",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -127,9 +127,6 @@
                     },
                     "404": {
                         "description": "Riwayat tidak ditemukan."
-                    },
-                    "422": {
-                        "description": "Validasi data gagal."
                     }
                 }
             }

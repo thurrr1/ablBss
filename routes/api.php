@@ -1,31 +1,21 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CutiController;
 
-Route::post('/pengajuan-cuti', [CutiController::class, 'ajukanCuti']);
-Route::get('/pengajuan-cuti/riwayat', [CutiController::class, 'lihatRiwayatGlobal']);
-Route::get('/pengajuan-cuti/{id}', [CutiController::class, 'lihatDetailPengajuan']);
-Route::put('/pengajuan-cuti/{id}/batal', [CutiController::class, 'batalkanPengajuan']);
-Route::post('/aktif-kembali', [CutiController::class, 'ajukanAktifKembali']);
+Route::middleware('web')->group(function () {
+    // 1. POST: Mengajukan permohonan Cuti Akademik baru
+    Route::post('/pengajuan-cuti', [CutiController::class, 'ajukanCuti']);
 
-// Route untuk Registrasi User Baru
-//Route::post('/auth/register', [AuthController::class, 'register']);
+    // 2. GET: Melihat detail status satu permohonan Cuti Akademik
+    Route::get('/pengajuan-cuti/{id}', [CutiController::class, 'lihatDetailPengajuan']);
 
-// Route untuk Login User
-//Route::post('/auth/login', [AuthController::class, 'login']);
+    // 3. GET: Melihat seluruh riwayat pengajuan Cuti Mahasiswa yang bersangkutan
+    Route::get('/pengajuan-cuti/riwayat/{mahasiswaId}', [CutiController::class, 'lihatRiwayatMahasiswa']);
 
-// Route CRUD yang dilindungi (Middleware harus dipanggil manual jika di web.php)
-// Route ini hanya bisa diakses dengan menyertakan Sanctum Token
-// Route::middleware('auth:sanctum')->group(function () {
-//     // API Resource untuk Jadwal
-//     // Endpoint: /api/schedules, /api/schedules/{id}
-//     Route::apiResource('schedules', ScheduleController::class);
+    // 4. PUT: Membatalkan pengajuan Cuti Akademik yang statusnya masih Pending
+    Route::put('/pengajuan-cuti/{id}/batal', [CutiController::class, 'batalkanPengajuan']);
 
-//     // Contoh route terproteksi lainnya:
-//     // Route::get('/user', function (Request $request) {
-//     //     return $request->user();
-//     // });
-// });
+    // 5. POST: Mengajukan permohonan untuk Aktif Kembali setelah masa cuti berakhir
+    Route::post('/aktif-kembali', [CutiController::class, 'ajukanAktifKembali']);
+});
