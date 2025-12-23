@@ -20,6 +20,12 @@ class PengajuanCuti extends Model
         'status_permohonan',
         'tanggal_sk_terbit',
         'catatan_admin',
+        'verifikator_pa_id',
+        'tanggal_verifikasi_pa',
+        'alasan_penolakan',
+        'is_perpanjangan',
+        'semester_perpanjangan',
+        'alasan_perpanjangan',
     ];
 
     // Relasi: Satu Pengajuan Cuti hanya dimiliki oleh satu Mahasiswa

@@ -315,7 +315,6 @@ class CutiController extends Controller
 
         $pengajuan = PengajuanCuti::findOrFail($request->pengajuan_id);
         
-        // Perbaikan: Pastikan pengajuan cuti yang diajukan untuk aktif kembali sudah 'Diterbitkan SK'
         if ($pengajuan->status_permohonan !== 'Diterbitkan SK') {
              return response()->json(['message' => 'Cuti belum disetujui atau sudah kadaluarsa.'], 400);
         }
@@ -384,5 +383,108 @@ class CutiController extends Controller
             'total_data' => $riwayat->count(),
             'data' => $riwayat
         ]);
+    }
+
+    /**
+     * Fungsional 6: Daftar pengajuan pending PA (GET /api/pa/pengajuan/pending)
+     */
+   public function listPendingPA(Request $request)
+    {
+        $paId = $request->header('PA-ID'); 
+        $pending = PengajuanCuti::where('status_permohonan', 'Pending PA')
+            ->whereHas('mahasiswa', function($query) use ($paId) {
+                if($paId) $query->where('dpa_id', $paId);
+            })
+            ->with('mahasiswa:id,nim,nama,prodi')
+            ->get();
+
+        return response()->json(['message' => 'Daftar pending PA.', 'data' => $pending]);
+    }
+
+    public function setujuiPA(Request $request, $id)
+    {
+        $pengajuan = PengajuanCuti::findOrFail($id);
+        DB::beginTransaction();
+        try {
+            $pengajuan->update([
+                'status_permohonan' => 'Disetujui PA',
+                'verifikator_pa_id' => $request->header('PA-ID'),
+                'tanggal_verifikasi_pa' => now()
+            ]);
+            LogAktivitas::create([
+                'pengajuan_id' => $pengajuan->id,
+                'tipe_aktivitas' => 'APPROVE_PA',
+                'dilakukan_oleh' => 'Dosen PA',
+                'timestamp' => now(),
+                'catatan' => 'Persetujuan oleh PA.',
+            ]);
+            DB::commit();
+            return response()->json(['message' => 'Berhasil disetujui PA.', 'data' => $pengajuan]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function tolakPA(Request $request, $id)
+    {
+        $request->validate(['catatan' => 'required|string']);
+        $pengajuan = PengajuanCuti::findOrFail($id);
+        DB::beginTransaction();
+        try {
+            $pengajuan->update([
+                'status_permohonan' => 'Ditolak PA',
+                'alasan_penolakan' => $request->catatan,
+                'verifikator_pa_id' => $request->header('PA-ID'),
+                'tanggal_verifikasi_pa' => now()
+            ]);
+            LogAktivitas::create([
+                'pengajuan_id' => $pengajuan->id,
+                'tipe_aktivitas' => 'REJECT_PA',
+                'dilakukan_oleh' => 'Dosen PA',
+                'timestamp' => now(),
+                'catatan' => $request->catatan,
+            ]);
+            DB::commit();
+            return response()->json(['message' => 'Berhasil ditolak PA.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // --- Fungsional Admin & Laporan (14, 15) ---
+
+    public function statistikCuti()
+    {
+        $statistik = PengajuanCuti::select('status_permohonan', DB::raw('count(*) as total'))
+            ->groupBy('status_permohonan')->get();
+        return response()->json(['data' => $statistik]);
+    }
+
+    public function perpanjangCuti(Request $request, $id)
+    {
+        $request->validate(['tambah_semester' => 'required|integer|min:1']);
+        $pengajuan = PengajuanCuti::findOrFail($id);
+        DB::beginTransaction();
+        try {
+            $pengajuan->update([
+                'lama_cuti_semester' => $pengajuan->lama_cuti_semester + $request->tambah_semester,
+                'is_perpanjangan' => true,
+                'catatan_admin' => $pengajuan->catatan_admin . " | Perpanjangan +" . $request->tambah_semester . " sem."
+            ]);
+            LogAktivitas::create([
+                'pengajuan_id' => $pengajuan->id,
+                'tipe_aktivitas' => 'EXTEND_CUTI',
+                'dilakukan_oleh' => 'Admin',
+                'timestamp' => now(),
+                'catatan' => 'Perpanjangan masa cuti.',
+            ]);
+            DB::commit();
+            return response()->json(['message' => 'Berhasil diperpanjang.', 'data' => $pengajuan]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal.', 'error' => $e->getMessage()], 500);
+        }
     }
 }
