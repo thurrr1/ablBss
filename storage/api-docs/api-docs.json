@@ -10,11 +10,59 @@
     },
     "servers": [
         {
-            "url": "http://my-default-host.com",
+            "url": "http://127.0.0.1:8000",
             "description": "Server Lokal Development"
         }
     ],
     "paths": {
+        "/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Masuk (Login) ke Aplikasi Laravel (Web Session)",
+                "description": "Digunakan untuk mendapatkan sesi otentikasi (cookies) yang diperlukan untuk mengakses endpoint yang dilindungi oleh middleware 'web'.",
+                "operationId": "loginUser",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "mahasiswa@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password"
+                                    },
+                                    "remember": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Berhasil login, dialihkan ke dashboard."
+                    },
+                    "422": {
+                        "description": "Kredensial tidak valid."
+                    }
+                }
+            }
+        },
         "/api/pengajuan-cuti": {
             "post": {
                 "tags": [
@@ -247,6 +295,16 @@
             }
         }
     },
+    "components": {
+        "securitySchemes": {
+            "web": {
+                "type": "apiKey",
+                "description": "Gunakan otentikasi session berbasis cookie (Login ke aplikasi utama Laravel terlebih dahulu).",
+                "name": "XSRF-TOKEN",
+                "in": "cookie"
+            }
+        }
+    },
     "tags": [
         {
             "name": "Mahasiswa",
@@ -255,6 +313,10 @@
         {
             "name": "Admin Global",
             "description": "Fungsional Layanan untuk Laporan Global Admin"
+        },
+        {
+            "name": "Authentication",
+            "description": "Authentication"
         }
     ]
 }

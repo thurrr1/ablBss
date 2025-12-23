@@ -20,7 +20,32 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Handle an incoming authentication request. (POST /login)
+     *
+     * @OA\Post(
+     * path="/login",
+     * operationId="loginUser",
+     * tags={"Authentication"},
+     * summary="Masuk (Login) ke Aplikasi Laravel (Web Session)",
+     * description="Digunakan untuk mendapatkan sesi otentikasi (cookies) yang diperlukan untuk mengakses endpoint yang dilindungi oleh middleware 'web'.",
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"email", "password"},
+     * @OA\Property(property="email", type="string", format="email", example="mahasiswa@example.com"),
+     * @OA\Property(property="password", type="string", format="password", example="password"),
+     * @OA\Property(property="remember", type="boolean", example=true)
+     * )
+     * ),
+     * @OA\Response(
+     * response=302,
+     * description="Berhasil login, dialihkan ke dashboard.",
+     * ),
+     * @OA\Response(
+     * response=422,
+     * description="Kredensial tidak valid.",
+     * )
+     * )
      */
     public function store(LoginRequest $request): RedirectResponse
     {
