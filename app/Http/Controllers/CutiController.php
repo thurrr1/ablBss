@@ -400,12 +400,39 @@ class CutiController extends Controller
     }
 
 
+  // =========================================================================
+    // II. Fungsional Layanan Verifikasi (Untuk Dosen Pembimbing Akademik / PA)
+    // =========================================================================
+
     /**
-     * Fungsional 6: Daftar pengajuan pending PA (GET /api/pa/pengajuan/pending)
+     * Fungsional Layanan 6: Mendapatkan daftar pengajuan Cuti yang perlu diverifikasi oleh PA
+     * * @OA\Get(
+     * path="/api/pa/pengajuan/pending",
+     * operationId="listPendingPA",
+     * tags={"Dosen PA"},
+     * summary="Mendapatkan daftar pengajuan cuti status Pending PA",
+     * description="Mengambil semua data pengajuan cuti mahasiswa bimbingan yang menunggu verifikasi.",
+     * @OA\Parameter(
+     * name="PA-ID",
+     * in="header",
+     * required=true,
+     * description="ID Dosen PA yang sedang login (Simulasi)",
+     * @OA\Schema(type="integer", example=1)
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Daftar pengajuan berhasil diambil.",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="Daftar pengajuan cuti menunggu verifikasi PA berhasil diambil."),
+     * @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     * )
+     * )
+     * )
      */
-   public function listPendingPA(Request $request)
+    public function listPendingPA(Request $request)
     {
-        $paId = $request->header('PA-ID');
+        $paId = $request->header('PA-ID'); 
+
         $pending = PengajuanCuti::where('status_permohonan', 'Pending PA')
             ->whereHas('mahasiswa', function($query) use ($paId) {
                 if($paId) $query->where('dpa_id', $paId);
@@ -413,12 +440,55 @@ class CutiController extends Controller
             ->with('mahasiswa:id,nim,nama,prodi')
             ->get();
 
-        return response()->json(['message' => 'Daftar pending PA.', 'data' => $pending]);
+        return response()->json([
+            'message' => 'Daftar pengajuan cuti menunggu verifikasi PA berhasil diambil.',
+            'data' => $pending
+        ]);
     }
 
+    /**
+     * Fungsional Layanan 7: Menyetujui permohonan Cuti Mahasiswa
+     * * @OA\Put(
+     * path="/api/pa/pengajuan/{id}/setujui",
+     * operationId="setujuiPA",
+     * tags={"Dosen PA"},
+     * summary="Menyetujui permohonan cuti (Approve)",
+     * @OA\Parameter(
+     * name="id",
+     * in="path",
+     * required=true,
+     * description="ID Pengajuan Cuti",
+     * @OA\Schema(type="integer")
+     * ),
+     * @OA\Parameter(
+     * name="PA-ID",
+     * in="header",
+     * required=true,
+     * description="ID Dosen PA yang melakukan persetujuan",
+     * @OA\Schema(type="integer", example=1)
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Permohonan berhasil disetujui.",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="Permohonan cuti disetujui oleh PA."),
+     * @OA\Property(property="data", type="object")
+     * )
+     * ),
+     * @OA\Response(
+     * response=400,
+     * description="Gagal: Status pengajuan bukan Pending PA."
+     * )
+     * )
+     */
     public function setujuiPA(Request $request, $id)
     {
         $pengajuan = PengajuanCuti::findOrFail($id);
+
+        if ($pengajuan->status_permohonan !== 'Pending PA') {
+            return response()->json(['message' => 'Pengajuan tidak dalam status Pending PA.'], 400);
+        }
+
         DB::beginTransaction();
         try {
             $pengajuan->update([
@@ -426,25 +496,70 @@ class CutiController extends Controller
                 'verifikator_pa_id' => $request->header('PA-ID'),
                 'tanggal_verifikasi_pa' => now()
             ]);
+
             LogAktivitas::create([
                 'pengajuan_id' => $pengajuan->id,
                 'tipe_aktivitas' => 'APPROVE_PA',
                 'dilakukan_oleh' => 'Dosen PA',
                 'timestamp' => now(),
-                'catatan' => 'Persetujuan oleh PA.',
+                'catatan' => 'Dosen PA menyetujui permohonan cuti.',
             ]);
+
             DB::commit();
-            return response()->json(['message' => 'Berhasil disetujui PA.', 'data' => $pengajuan]);
+            return response()->json(['message' => 'Permohonan cuti disetujui oleh PA.', 'data' => $pengajuan]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Gagal.', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Gagal menyetujui permohonan.', 'error' => $e->getMessage()], 500);
         }
     }
 
+    /**
+     * Fungsional Layanan 8: Menolak permohonan Cuti
+     * * @OA\Put(
+     * path="/api/pa/pengajuan/{id}/tolak",
+     * operationId="tolakPA",
+     * tags={"Dosen PA"},
+     * summary="Menolak permohonan cuti (Reject)",
+     * @OA\Parameter(
+     * name="id",
+     * in="path",
+     * required=true,
+     * description="ID Pengajuan Cuti",
+     * @OA\Schema(type="integer")
+     * ),
+     * @OA\Parameter(
+     * name="PA-ID",
+     * in="header",
+     * required=true,
+     * description="ID Dosen PA yang menolak",
+     * @OA\Schema(type="integer", example=1)
+     * ),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"catatan"},
+     * @OA\Property(property="catatan", type="string", example="Dokumen kurang lengkap, mohon lengkapi surat dokter.", description="Alasan penolakan")
+     * )
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Permohonan berhasil ditolak.",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="Permohonan cuti ditolak oleh PA.")
+     * )
+     * ),
+     * @OA\Response(
+     * response=422,
+     * description="Validasi gagal (Catatan wajib diisi)."
+     * )
+     * )
+     */
     public function tolakPA(Request $request, $id)
     {
-        $request->validate(['catatan' => 'required|string']);
+        $request->validate(['catatan' => 'required|string|max:255']);
+        
         $pengajuan = PengajuanCuti::findOrFail($id);
+
         DB::beginTransaction();
         try {
             $pengajuan->update([
@@ -453,6 +568,7 @@ class CutiController extends Controller
                 'verifikator_pa_id' => $request->header('PA-ID'),
                 'tanggal_verifikasi_pa' => now()
             ]);
+
             LogAktivitas::create([
                 'pengajuan_id' => $pengajuan->id,
                 'tipe_aktivitas' => 'REJECT_PA',
@@ -460,46 +576,119 @@ class CutiController extends Controller
                 'timestamp' => now(),
                 'catatan' => $request->catatan,
             ]);
+
             DB::commit();
-            return response()->json(['message' => 'Berhasil ditolak PA.']);
+            return response()->json(['message' => 'Permohonan cuti ditolak oleh PA.']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Gagal.', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Gagal menolak permohonan.', 'error' => $e->getMessage()], 500);
         }
     }
 
-    // --- Fungsional Admin & Laporan (14, 15) ---
+    // =========================================================================
+    // IV. Fungsional Layanan Pelaporan & Perpanjangan
+    // =========================================================================
 
+    /**
+     * Fungsional Layanan 14: Mendapatkan data statistik Cuti
+     * * @OA\Get(
+     * path="/api/report/statistik-cuti",
+     * operationId="statistikCuti",
+     * tags={"Admin Global"},
+     * summary="Melihat statistik jumlah pengajuan cuti berdasarkan status",
+     * @OA\Response(
+     * response=200,
+     * description="Statistik berhasil diambil.",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="Statistik pengajuan cuti berhasil diambil."),
+     * @OA\Property(property="data", type="array", @OA\Items(
+     * @OA\Property(property="status_permohonan", type="string", example="Pending PA"),
+     * @OA\Property(property="total", type="integer", example=5)
+     * ))
+     * )
+     * )
+     * )
+     */
     public function statistikCuti()
     {
         $statistik = PengajuanCuti::select('status_permohonan', DB::raw('count(*) as total'))
-            ->groupBy('status_permohonan')->get();
-        return response()->json(['data' => $statistik]);
+            ->groupBy('status_permohonan')
+            ->get();
+
+        return response()->json([
+            'message' => 'Statistik pengajuan cuti berhasil diambil.',
+            'data' => $statistik
+        ]);
     }
 
+    /**
+     * Fungsional Layanan 15: Memproses perpanjangan masa cuti
+     * * @OA\Put(
+     * path="/api/admin/perpanjang-cuti/{id}",
+     * operationId="perpanjangCuti",
+     * tags={"Admin Global"},
+     * summary="Memperpanjang durasi cuti (Admin)",
+     * @OA\Parameter(
+     * name="id",
+     * in="path",
+     * required=true,
+     * description="ID Pengajuan Cuti",
+     * @OA\Schema(type="integer")
+     * ),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"tambah_semester"},
+     * @OA\Property(property="tambah_semester", type="integer", example=1, description="Jumlah semester yang ditambahkan")
+     * )
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Masa cuti berhasil diperpanjang.",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string", example="Masa cuti berhasil diperpanjang."),
+     * @OA\Property(property="data", type="object")
+     * )
+     * ),
+     * @OA\Response(
+     * response=400,
+     * description="Gagal: Status pengajuan belum Diterbitkan SK."
+     * )
+     * )
+     */
     public function perpanjangCuti(Request $request, $id)
     {
         $request->validate(['tambah_semester' => 'required|integer|min:1']);
+        
         $pengajuan = PengajuanCuti::findOrFail($id);
+
+        if ($pengajuan->status_permohonan !== 'Diterbitkan SK') {
+            return response()->json(['message' => 'Hanya pengajuan dengan SK diterbitkan yang dapat diperpanjang.'], 400);
+        }
+
         DB::beginTransaction();
         try {
+            $lama_baru = $pengajuan->lama_cuti_semester + $request->tambah_semester;
+            
             $pengajuan->update([
-                'lama_cuti_semester' => $pengajuan->lama_cuti_semester + $request->tambah_semester,
+                'lama_cuti_semester' => $lama_baru,
                 'is_perpanjangan' => true,
-                'catatan_admin' => $pengajuan->catatan_admin . " | Perpanjangan +" . $request->tambah_semester . " sem."
+                'catatan_admin' => $pengajuan->catatan_admin . " | Perpanjangan +" . $request->tambah_semester . " semester."
             ]);
+
             LogAktivitas::create([
                 'pengajuan_id' => $pengajuan->id,
                 'tipe_aktivitas' => 'EXTEND_CUTI',
-                'dilakukan_oleh' => 'Admin',
+                'dilakukan_oleh' => 'Admin BAAK',
                 'timestamp' => now(),
-                'catatan' => 'Perpanjangan masa cuti.',
+                'catatan' => 'Admin memperpanjang masa cuti sebanyak ' . $request->tambah_semester . ' semester.',
             ]);
+
             DB::commit();
-            return response()->json(['message' => 'Berhasil diperpanjang.', 'data' => $pengajuan]);
+            return response()->json(['message' => 'Masa cuti berhasil diperpanjang.', 'data' => $pengajuan]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Gagal.', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Gagal memperpanjang cuti.', 'error' => $e->getMessage()], 500);
         }
     }
 }
