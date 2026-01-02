@@ -3,8 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CutiController;
 use App\Http\Controllers\Admin\AdminCutiController;
+use App\Http\Controllers\UasController;
 
-// Route::middleware('web')->group(function () {
+Route::middleware('web')->group(function () {
     // 1. POST: Mengajukan permohonan Cuti Akademik baru
     Route::post('/pengajuan-cuti', [CutiController::class, 'ajukanCuti']);
 
@@ -23,7 +24,17 @@ use App\Http\Controllers\Admin\AdminCutiController;
     // No. 14, 15 (Admin)
     Route::get('/report/statistik-cuti', [CutiController::class, 'statistikCuti']);
     Route::put('/admin/perpanjang-cuti/{id}', [CutiController::class, 'perpanjangCuti']);
-// });
+
+    Route::prefix('uas')->group(function () {
+        
+        // 1. GET: List Kategori Makanan dari API Luar
+        Route::get('/makanan/kategori', [UasController::class, 'listKategori']);
+
+        // 2. GET: Detail Makanan berdasarkan nama dari API Luar
+        Route::get('/makanan/cari', [UasController::class, 'detailMakanan']);
+        
+    });
+});
 
 // Route::prefix('admin')->group(function () {
     Route::get('/mahasiswa-cuti', [AdminCutiController::class, 'daftarMahasiswaCuti']);
