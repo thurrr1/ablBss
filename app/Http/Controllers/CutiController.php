@@ -21,26 +21,16 @@ use Illuminate\Support\Facades\DB; // Digunakan untuk Transaction
  * url=L5_SWAGGER_CONST_HOST,
  * description="Server Lokal Development"
  * )
- * @OA\Tag(
- * name="Mahasiswa",
- * description="Fungsional Layanan untuk Pengajuan Cuti Mahasiswa"
- * )
- * @OA\Tag(
- * name="Admin Global",
- * description="Fungsional Layanan untuk Laporan Global Admin"
- * )
- * * // *******************************************************************
- * // ANOTASI SECURITY GLOBAL (UNTUK MIDDLEWARE WEB/SESSION)
- * // *******************************************************************
+ * @OA\Tag(name="Authentication", description="Endpoint untuk masuk ke sistem")
+ * @OA\Tag(name="Mahasiswa", description="Fungsional Layanan untuk Pengajuan Cuti Mahasiswa")
+ * @OA\Tag(name="Admin Global", description="Fungsional Layanan untuk Laporan Global Admin")
+ *
  * @OA\SecurityScheme(
- * securityScheme="web",
- * type="apiKey",
- * in="cookie",
- * name="XSRF-TOKEN",
- * description="Gunakan otentikasi session berbasis cookie (Login ke aplikasi utama Laravel terlebih dahulu)."
- * )
- * @OA\Security(
- * {"web": {}}
+ *      securityScheme="csrfHeader",
+ *      type="apiKey",
+ *      in="header",
+ *      name="X-XSRF-TOKEN",
+ *      description="Untuk otentikasi CSRF, token diambil dari cookie 'XSRF-TOKEN' dan dikirim melalui header ini. Wajib untuk request POST, PUT, DELETE."
  * )
  */
 class CutiController extends Controller
@@ -52,6 +42,7 @@ class CutiController extends Controller
      * operationId="ajukanCuti",
      * tags={"Mahasiswa"},
      * summary="Mengajukan permohonan Cuti Akademik baru",
+     * security={ {"csrfHeader": {}} },
      * @OA\RequestBody(
      * required=true,
      * @OA\JsonContent(
@@ -81,7 +72,7 @@ class CutiController extends Controller
             'lama_cuti_semester' => 'required|integer|min:1',
             'alasan_cuti' => 'required|string|max:500',
         ]);
-
+        
         DB::beginTransaction();
 
         try {
@@ -91,8 +82,8 @@ class CutiController extends Controller
                 'semester_cuti' => $request->semester_cuti,
                 'lama_cuti_semester' => $request->lama_cuti_semester,
                 'alasan_cuti' => $request->alasan_cuti,
-                'tanggal_pengajuan' => now(),
-                'status_permohonan' => 'Pending PA',
+                'tanggal_pengajuan' => now(), 
+                'status_permohonan' => 'Pending PA', 
             ]);
 
             // 3. CREATE: Simpan Log Aktivitas
@@ -109,7 +100,7 @@ class CutiController extends Controller
             return response()->json([
                 'message' => 'Pengajuan cuti berhasil dibuat. Menunggu verifikasi PA.',
                 'data' => $pengajuan
-            ], 201);
+            ], 201); 
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -192,8 +183,8 @@ class CutiController extends Controller
     {
         // Langsung menggunakan ID Mahasiswa dari Route Parameter
         $riwayat = PengajuanCuti::where('mahasiswa_id', $mahasiswaId)
-            ->with(['mahasiswa:id,nim,nama,prodi', 'logAktivitas'])
-            ->orderBy('tanggal_pengajuan', 'desc')
+            ->with(['mahasiswa:id,nim,nama,prodi', 'logAktivitas']) 
+            ->orderBy('tanggal_pengajuan', 'desc') 
             ->get();
 
         if ($riwayat->isEmpty()) {
@@ -216,6 +207,7 @@ class CutiController extends Controller
      * operationId="batalkanPengajuan",
      * tags={"Mahasiswa"},
      * summary="Membatalkan pengajuan cuti yang masih Pending PA",
+     * security={ {"csrfHeader": {}} },
      * @OA\Parameter(
      * name="id",
      * in="path",
@@ -246,19 +238,19 @@ class CutiController extends Controller
      */
     public function batalkanPengajuan(Request $request, $id)
     {
-        $request->validate(['mahasiswa_id' => 'required|integer']);
-
+        $request->validate(['mahasiswa_id' => 'required|integer']); 
+        
         $pengajuan = PengajuanCuti::find($id);
 
         if (!$pengajuan) {
             return response()->json(['message' => 'Pengajuan cuti tidak ditemukan.'], 404);
         }
-
+        
         // Perbaikan: Pastikan Mahasiswa yang membatalkan adalah Mahasiswa pengaju
         if ($pengajuan->mahasiswa_id !== $request->mahasiswa_id) {
             return response()->json(['message' => 'Anda tidak berhak membatalkan pengajuan ini.'], 403);
         }
-
+        
         // Hanya bisa dibatalkan jika statusnya masih 'Pending PA'
         if ($pengajuan->status_permohonan !== 'Pending PA') {
             return response()->json(['message' => 'Pengajuan tidak dapat dibatalkan karena statusnya: ' . $pengajuan->status_permohonan], 400);
@@ -275,7 +267,7 @@ class CutiController extends Controller
             LogAktivitas::create([
                 'pengajuan_id' => $pengajuan->id,
                 'tipe_aktivitas' => 'DIBATALKAN',
-                'dilakukan_oleh' => 'Mahasiswa (ID: ' . $pengajuan->mahasiswa_id . ')',
+                'dilakukan_oleh' => 'Mahasiswa (ID: ' . $pengajuan->mahasiswa_id . ')', 
                 'timestamp' => now(),
                 'catatan' => 'Pengajuan dibatalkan oleh Mahasiswa.',
             ]);
@@ -286,7 +278,7 @@ class CutiController extends Controller
                 'message' => 'Pengajuan cuti ID ' . $id . ' berhasil dibatalkan.',
                 'data' => $pengajuan
             ]);
-
+            
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Gagal membatalkan pengajuan.', 'error' => $e->getMessage()], 500);
@@ -301,6 +293,7 @@ class CutiController extends Controller
      * operationId="ajukanAktifKembali",
      * tags={"Mahasiswa"},
      * summary="Mengajukan permohonan untuk Aktif Kembali setelah masa cuti",
+     * security={ {"csrfHeader": {}} },
      * @OA\RequestBody(
      * required=true,
      * @OA\JsonContent(
@@ -327,7 +320,7 @@ class CutiController extends Controller
         ]);
 
         $pengajuan = PengajuanCuti::findOrFail($request->pengajuan_id);
-
+        
         // Perbaikan: Pastikan pengajuan cuti yang diajukan untuk aktif kembali sudah 'Diterbitkan SK'
         if ($pengajuan->status_permohonan !== 'Diterbitkan SK') {
              return response()->json(['message' => 'Cuti belum disetujui atau sudah kadaluarsa.'], 400);
@@ -343,60 +336,21 @@ class CutiController extends Controller
                 'timestamp' => now(),
                 'catatan' => 'Permintaan aktif kembali untuk semester ' . $request->semester_aktif . '.',
             ]);
-
+            
             // 2. Update Status Pengajuan menjadi Pending Aktif Kembali
             $pengajuan->update(['status_permohonan' => 'Pending Aktif Kembali']);
-
+            
             DB::commit();
 
             return response()->json([
                 'message' => 'Permintaan aktif kembali berhasil diajukan. Menunggu verifikasi BAAK.',
                 'request_data' => $request->all()
             ], 201);
-
+            
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Gagal mengajukan aktif kembali.', 'error' => $e->getMessage()], 500);
         }
-    }
-
-    /**
-     * Fungsional Layanan Global: Melihat seluruh riwayat pengajuan cuti (Semua Mahasiswa)
-     * Endpoint: GET /api/admin/semua-pengajuan
-     *
-     * @OA\Get(
-     * path="/api/admin/semua-pengajuan",
-     * operationId="lihatRiwayatGlobal",
-     * tags={"Admin Global"},
-     * summary="Melihat seluruh riwayat pengajuan cuti semua Mahasiswa (Akses Admin)",
-     * @OA\Response(
-     * response=200,
-     * description="Seluruh riwayat pengajuan cuti berhasil diambil.",
-     * ),
-     * @OA\Response(
-     * response=404,
-     * description="Belum ada data pengajuan cuti di database.",
-     * )
-     * )
-     */
-    public function lihatRiwayatGlobal()
-    {
-        $riwayat = PengajuanCuti::with('mahasiswa:id,nim,nama,prodi')
-            ->with('logAktivitas')
-            ->orderBy('tanggal_pengajuan', 'desc')
-            ->get();
-
-        if ($riwayat->isEmpty()) {
-            return response()->json([
-                'message' => 'Belum ada data pengajuan cuti di database.'
-            ], 404);
-        }
-
-        return response()->json([
-            'message' => 'Seluruh riwayat pengajuan cuti berhasil diambil.',
-            'total_data' => $riwayat->count(),
-            'data' => $riwayat
-        ]);
     }
 
 
