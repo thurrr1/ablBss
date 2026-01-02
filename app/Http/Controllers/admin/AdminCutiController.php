@@ -294,8 +294,7 @@ class AdminCutiController extends Controller
             return response()->json(['message' => 'Pengajuan cuti tidak ditemukan.'], 404);
         }
 
-        // Guard sederhana: SK umumnya dicatat setelah status "Diterbitkan SK"
-        // Jika Anda ingin membolehkan dari status lain, silakan sesuaikan aturan ini.
+
         if (!in_array($pengajuan->status_permohonan, ['Diterbitkan SK', 'Pending Aktif Kembali'])) {
             return response()->json([
                 'message' => 'SK hanya dapat dicatat/diunggah untuk pengajuan dengan status Diterbitkan SK atau Pending Aktif Kembali. Status saat ini: ' . $pengajuan->status_permohonan
@@ -309,23 +308,17 @@ class AdminCutiController extends Controller
             if ($request->hasFile('sk_file')) {
                 $file = $request->file('sk_file');
 
-                // Folder: storage/app/public/sk_cuti/{pengajuan_id}/
-                // Pastikan sudah menjalankan: php artisan storage:link
+
                 $storedPath = $file->store(
                     'public/sk_cuti/' . $pengajuan->id
                 );
             }
 
-            // Update kolom-kolom SK di PengajuanCuti (pastikan kolom ada di tabel Anda):
-            // - sk_path (string, nullable)
-            // - nomor_sk (string, nullable)
-            // - tanggal_sk (date/datetime, nullable)
-            // - sk_uploaded_at (datetime, nullable)
-            // - sk_uploaded_by (string, nullable)
+
             $updatePayload = [];
 
             if ($storedPath !== null) {
-                // simpan path "public/..." agar konsisten dengan Storage
+
                 $updatePayload['sk_path'] = $storedPath;
             }
             if ($request->filled('nomor_sk')) {
@@ -335,7 +328,7 @@ class AdminCutiController extends Controller
                 $updatePayload['tanggal_sk'] = $request->tanggal_sk;
             }
 
-            // Set metadata upload/catat
+
             $updatePayload['sk_uploaded_at'] = now();
             $updatePayload['sk_uploaded_by'] = $request->admin_name;
 
@@ -365,7 +358,7 @@ class AdminCutiController extends Controller
                 ]
             ];
 
-            // Jika file diunggah, kembalikan URL publik (jika storage:link aktif)
+
             if (!empty($response['data']['sk_path'])) {
                 $response['data']['sk_url'] = \Illuminate\Support\Facades\Storage::url($response['data']['sk_path']);
             }
@@ -447,7 +440,7 @@ class AdminCutiController extends Controller
 
         DB::beginTransaction();
         try {
-            // Prefer arsip jika model tidak memakai soft delete.
+
             $usesSoftDeletes = in_array(
                 'Illuminate\\Database\\Eloquent\\SoftDeletes',
                 class_uses_recursive($pengajuan)
