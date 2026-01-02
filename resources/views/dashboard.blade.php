@@ -226,7 +226,7 @@
                 result.data.forEach((item, index) => {
                     tableBody.innerHTML += `
                         <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-                            <td class="px-4 py-4 whitespace-nowrap">${item.id}</td>
+                            <td class="px-4 py-4 whitespace-nowrap">${index + 1}</td>
                             <td class="px-4 py-4 whitespace-nowrap">${item.semester_cuti}</td>
                             <td class="px-4 py-4 whitespace-nowrap">${item.lama_cuti_semester} Semester</td>
                             <td class="px-4 py-4 whitespace-nowrap">
