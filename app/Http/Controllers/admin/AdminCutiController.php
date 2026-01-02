@@ -11,8 +11,64 @@ use Illuminate\Support\Facades\DB;
 class AdminCutiController extends Controller
 {
     /**
+     * ======================================================================
+     * SWAGGER / OPENAPI DOCS (L5-SWAGGER)
+     * Catatan:
+     * - Ini hanya penambahan dokumentasi (annotations) untuk fungsional 9–13.
+     * - Tidak mengubah logika/isi kode lama.
+     * - Pastikan l5-swagger Anda meng-scan folder app/Http/Controllers
+     * ======================================================================
+     */
+
+    /**
      * No. 9 (READ)
      * Mendapatkan daftar seluruh mahasiswa yang sedang berstatus Cuti Akademik
+     *
+     * @OA\Get(
+     *   path="/api/mahasiswa-cuti",
+     *   tags={"Admin Cuti"},
+     *   summary="(9) Daftar mahasiswa yang sedang berstatus Cuti Akademik",
+     *   description="Mengambil daftar pengajuan cuti dengan status 'Diterbitkan SK' atau 'Pending Aktif Kembali', beserta data mahasiswa (nim, nama, prodi).",
+     *   @OA\Response(
+     *     response=200,
+     *     description="Berhasil mengambil daftar mahasiswa cuti",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Daftar mahasiswa cuti berhasil diambil."),
+     *       @OA\Property(property="total_data", type="integer", example=1),
+     *       @OA\Property(
+     *         property="data",
+     *         type="array",
+     *         @OA\Items(
+     *           type="object",
+     *           @OA\Property(property="id", type="integer", example=1),
+     *           @OA\Property(property="mahasiswa_id", type="integer", example=1),
+     *           @OA\Property(property="semester_cuti", type="string", example="Ganjil 2026/2027"),
+     *           @OA\Property(property="lama_cuti_semester", type="integer", example=1),
+     *           @OA\Property(property="alasan_cuti", type="string", example="Mengambil magang di luar kota."),
+     *           @OA\Property(property="tanggal_pengajuan", type="string", example="2025-12-23 12:07:52"),
+     *           @OA\Property(property="status_permohonan", type="string", example="Diterbitkan SK"),
+     *           @OA\Property(
+     *             property="mahasiswa",
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="nim", type="string", example="12345678"),
+     *             @OA\Property(property="nama", type="string", example="Budi Santoso"),
+     *             @OA\Property(property="prodi", type="string", example="Teknik Informatika")
+     *           )
+     *         )
+     *       )
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=404,
+     *     description="Tidak ada data mahasiswa cuti",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Tidak ada mahasiswa yang sedang berstatus Cuti Akademik.")
+     *     )
+     *   )
+     * )
      */
     public function daftarMahasiswaCuti()
     {
@@ -37,6 +93,62 @@ class AdminCutiController extends Controller
     /**
      * No. 10 (UPDATE)
      * Mengubah status cuti dari Disetujui menjadi Diterbitkan SK
+     *
+     * @OA\Put(
+     *   path="/api/status-cuti/{id}",
+     *   tags={"Admin Cuti"},
+     *   summary="(10) Terbitkan SK: ubah status dari 'Disetujui PA' menjadi 'Diterbitkan SK'",
+     *   description="Mengubah status_permohonan pengajuan cuti menjadi 'Diterbitkan SK'. Hanya dapat dilakukan jika status saat ini 'Disetujui PA'.",
+     *   @OA\Parameter(
+     *     name="id",
+     *     in="path",
+     *     required=true,
+     *     description="ID pengajuan cuti",
+     *     @OA\Schema(type="integer"),
+     *     example=2
+     *   ),
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       required={"admin_name"},
+     *       @OA\Property(property="admin_name", type="string", maxLength=100, example="Admin BAAK")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="Status berhasil diubah",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Status cuti berhasil diubah menjadi Diterbitkan SK.")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=400,
+     *     description="Status tidak memenuhi syarat perubahan",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Status tidak dapat diubah. Status saat ini: Pending PA")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=404,
+     *     description="Pengajuan tidak ditemukan",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Pengajuan cuti tidak ditemukan.")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=500,
+     *     description="Kesalahan server",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Gagal menerbitkan SK cuti."),
+     *       @OA\Property(property="error", type="string", example="Exception message")
+     *     )
+     *   )
+     * )
      */
     public function terbitkanSk(Request $request, $id)
     {
@@ -85,8 +197,78 @@ class AdminCutiController extends Controller
 
     /**
      * No. 11 (CREATE)
-     * POST /api/admin/penerbitan-sk
+     * POST /api/penerbitan-sk
      * Mengunggah atau Mencatat SK Cuti Akademik yang telah ditandatangani.
+     *
+     * @OA\Post(
+     *   path="/api/penerbitan-sk",
+     *   tags={"Admin Cuti"},
+     *   summary="(11) Mengunggah atau mencatat SK Cuti Akademik",
+     *   description="Mencatat metadata SK dan/atau mengunggah file SK (pdf/jpg/jpeg/png max 5MB). Hanya untuk status 'Diterbitkan SK' atau 'Pending Aktif Kembali'.",
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\MediaType(
+     *       mediaType="multipart/form-data",
+     *       @OA\Schema(
+     *         required={"pengajuan_id","admin_name"},
+     *         @OA\Property(property="pengajuan_id", type="integer", example=1),
+     *         @OA\Property(property="admin_name", type="string", maxLength=100, example="Admin BAAK"),
+     *         @OA\Property(property="nomor_sk", type="string", nullable=true, maxLength=100, example="SK-BAAK/001/2026"),
+     *         @OA\Property(property="tanggal_sk", type="string", format="date", nullable=true, example="2026-01-02"),
+     *         @OA\Property(property="catatan", type="string", nullable=true, maxLength=500, example="SK sudah ditandatangani dan dicatat."),
+     *         @OA\Property(
+     *           property="sk_file",
+     *           type="string",
+     *           format="binary",
+     *           nullable=true,
+     *           description="File SK (pdf/jpg/jpeg/png), maksimum 5MB"
+     *         )
+     *       )
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=201,
+     *     description="Berhasil dicatat/diunggah",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="SK Cuti Akademik berhasil dicatat/diunggah."),
+     *       @OA\Property(
+     *         property="data",
+     *         type="object",
+     *         @OA\Property(property="pengajuan_id", type="integer", example=1),
+     *         @OA\Property(property="nomor_sk", type="string", nullable=true, example="SK-BAAK/001/2026"),
+     *         @OA\Property(property="tanggal_sk", type="string", nullable=true, example="2026-01-02"),
+     *         @OA\Property(property="sk_path", type="string", nullable=true, example=null),
+     *         @OA\Property(property="sk_url", type="string", nullable=true, example=null)
+     *       )
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=400,
+     *     description="Status pengajuan tidak sesuai",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="SK hanya dapat dicatat/diunggah untuk pengajuan dengan status Diterbitkan SK atau Pending Aktif Kembali. Status saat ini: Pending PA")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=404,
+     *     description="Pengajuan tidak ditemukan",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Pengajuan cuti tidak ditemukan.")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=500,
+     *     description="Kesalahan server",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Gagal mencatat/mengunggah SK cuti."),
+     *       @OA\Property(property="error", type="string", example="Exception message")
+     *     )
+     *   )
+     * )
      *
      * Payload yang disarankan:
      * - pengajuan_id (required|integer)
@@ -198,7 +380,59 @@ class AdminCutiController extends Controller
         }
     }
 
-
+    /**
+     * No. 12 (DELETE)
+     * Menghapus (atau Mengarsip) data Cuti yang tidak valid atau telah usang.
+     *
+     * @OA\Delete(
+     *   path="/api/status-cuti/{id}",
+     *   tags={"Admin Cuti"},
+     *   summary="(12) Menghapus atau mengarsip data cuti",
+     *   description="Menghapus data cuti (soft delete jika menggunakan SoftDeletes) atau mengarsipkan dengan mengubah status menjadi 'Diarsipkan' serta mencatat alasan.",
+     *   @OA\Parameter(
+     *     name="id",
+     *     in="path",
+     *     required=true,
+     *     description="ID pengajuan cuti",
+     *     @OA\Schema(type="integer"),
+     *     example=1
+     *   ),
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       required={"admin_name"},
+     *       @OA\Property(property="admin_name", type="string", maxLength=100, example="Admin BAAK"),
+     *       @OA\Property(property="alasan", type="string", nullable=true, maxLength=500, example="Data uji coba (testing endpoint delete/arsip).")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="Berhasil dihapus/diarsipkan",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Data cuti berhasil diarsipkan.")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=404,
+     *     description="Pengajuan tidak ditemukan",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Pengajuan cuti tidak ditemukan.")
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=500,
+     *     description="Kesalahan server",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Gagal menghapus/mengarsip data cuti."),
+     *       @OA\Property(property="error", type="string", example="Exception message")
+     *     )
+     *   )
+     * )
+     */
     public function hapusAtauArsipCuti(Request $request, $id)
     {
         $request->validate([
@@ -257,7 +491,54 @@ class AdminCutiController extends Controller
         }
     }
 
-
+    /**
+     * No. 13 (READ)
+     * Mendapatkan data tagihan biaya Cuti Akademik (jika ada).
+     *
+     * @OA\Get(
+     *   path="/api/tagihan-cuti",
+     *   tags={"Admin Cuti"},
+     *   summary="(13) Mendapatkan data tagihan biaya Cuti Akademik",
+     *   description="Mengambil daftar pengajuan cuti yang memiliki biaya_cuti > 0 (jika kolom biaya_cuti digunakan).",
+     *   @OA\Response(
+     *     response=200,
+     *     description="Berhasil mengambil data tagihan cuti",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Data tagihan cuti berhasil diambil."),
+     *       @OA\Property(property="total_data", type="integer", example=3),
+     *       @OA\Property(
+     *         property="data",
+     *         type="array",
+     *         @OA\Items(
+     *           type="object",
+     *           @OA\Property(property="id", type="integer", example=1),
+     *           @OA\Property(property="mahasiswa_id", type="integer", example=1),
+     *           @OA\Property(property="semester_cuti", type="string", example="Ganjil 2026/2027"),
+     *           @OA\Property(property="status_permohonan", type="string", example="Pending PA"),
+     *           @OA\Property(property="biaya_cuti", type="number", nullable=true, example=1500000),
+     *           @OA\Property(
+     *             property="mahasiswa",
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="nim", type="string", example="12345678"),
+     *             @OA\Property(property="nama", type="string", example="Budi Santoso"),
+     *             @OA\Property(property="prodi", type="string", example="Teknik Informatika")
+     *           )
+     *         )
+     *       )
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=404,
+     *     description="Tidak ada data tagihan",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="message", type="string", example="Tidak ada data tagihan biaya cuti akademik.")
+     *     )
+     *   )
+     * )
+     */
     public function daftarTagihanCuti()
     {
         $data = PengajuanCuti::with(['mahasiswa:id,nim,nama,prodi'])

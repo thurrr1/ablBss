@@ -116,7 +116,12 @@
                     "422": {
                         "description": "Validasi data gagal (misal: mahasiswa_id tidak valid)."
                     }
-                }
+                },
+                "security": [
+                    {
+                        "csrfHeader": []
+                    }
+                ]
             }
         },
         "/api/pengajuan-cuti/{id}": {
@@ -229,7 +234,12 @@
                     "403": {
                         "description": "Forbidden: Anda tidak berhak membatalkan pengajuan ini."
                     }
-                }
+                },
+                "security": [
+                    {
+                        "csrfHeader": []
+                    }
+                ]
             }
         },
         "/api/aktif-kembali": {
@@ -273,25 +283,12 @@
                     "400": {
                         "description": "Pengajuan cuti belum disetujui atau sudah kadaluarsa."
                     }
-                }
-            }
-        },
-        "/api/admin/semua-pengajuan": {
-            "get": {
-                "tags": [
-                    "Admin Global"
-                ],
-                "summary": "Melihat seluruh riwayat pengajuan cuti semua Mahasiswa (Akses Admin)",
-                "description": "Fungsional Layanan Global: Melihat seluruh riwayat pengajuan cuti (Semua Mahasiswa)\nEndpoint: GET /api/admin/semua-pengajuan",
-                "operationId": "lihatRiwayatGlobal",
-                "responses": {
-                    "200": {
-                        "description": "Seluruh riwayat pengajuan cuti berhasil diambil."
-                    },
-                    "404": {
-                        "description": "Belum ada data pengajuan cuti di database."
+                },
+                "security": [
+                    {
+                        "csrfHeader": []
                     }
-                }
+                ]
             }
         },
         "/api/pa/pengajuan/pending": {
@@ -575,19 +572,638 @@
                     }
                 }
             }
+        },
+        "/api/uas/makanan/kategori": {
+            "get": {
+                "tags": [
+                    "UAS"
+                ],
+                "summary": "UAS 1: List Kategori Makanan (Mengonsumsi TheMealDB)",
+                "operationId": "getMealCategories",
+                "responses": {
+                    "200": {
+                        "description": "Berhasil mengambil daftar kategori"
+                    }
+                }
+            }
+        },
+        "/api/uas/makanan/cari": {
+            "get": {
+                "tags": [
+                    "UAS"
+                ],
+                "summary": "UAS 2: Detail Makanan berdasarkan Nama (Mengonsumsi TheMealDB)",
+                "operationId": "searchMeal",
+                "parameters": [
+                    {
+                        "name": "s",
+                        "in": "query",
+                        "description": "Nama makanan (contoh: Arrabiata)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil mengambil detail makanan"
+                    },
+                    "404": {
+                        "description": "Makanan tidak ditemukan"
+                    }
+                }
+            }
+        },
+        "/api/mahasiswa-cuti": {
+            "get": {
+                "tags": [
+                    "Admin Cuti"
+                ],
+                "summary": "(9) Daftar mahasiswa yang sedang berstatus Cuti Akademik",
+                "description": "Mengambil daftar pengajuan cuti dengan status 'Diterbitkan SK' atau 'Pending Aktif Kembali', beserta data mahasiswa (nim, nama, prodi).",
+                "operationId": "7281141a72d573c9b45e206cdb78571f",
+                "responses": {
+                    "200": {
+                        "description": "Berhasil mengambil daftar mahasiswa cuti",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Daftar mahasiswa cuti berhasil diambil."
+                                        },
+                                        "total_data": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "mahasiswa_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "semester_cuti": {
+                                                        "type": "string",
+                                                        "example": "Ganjil 2026/2027"
+                                                    },
+                                                    "lama_cuti_semester": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "alasan_cuti": {
+                                                        "type": "string",
+                                                        "example": "Mengambil magang di luar kota."
+                                                    },
+                                                    "tanggal_pengajuan": {
+                                                        "type": "string",
+                                                        "example": "2025-12-23 12:07:52"
+                                                    },
+                                                    "status_permohonan": {
+                                                        "type": "string",
+                                                        "example": "Diterbitkan SK"
+                                                    },
+                                                    "mahasiswa": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "nim": {
+                                                                "type": "string",
+                                                                "example": "12345678"
+                                                            },
+                                                            "nama": {
+                                                                "type": "string",
+                                                                "example": "Budi Santoso"
+                                                            },
+                                                            "prodi": {
+                                                                "type": "string",
+                                                                "example": "Teknik Informatika"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tidak ada data mahasiswa cuti",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tidak ada mahasiswa yang sedang berstatus Cuti Akademik."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/status-cuti/{id}": {
+            "put": {
+                "tags": [
+                    "Admin Cuti"
+                ],
+                "summary": "(10) Terbitkan SK: ubah status dari 'Disetujui PA' menjadi 'Diterbitkan SK'",
+                "description": "Mengubah status_permohonan pengajuan cuti menjadi 'Diterbitkan SK'. Hanya dapat dilakukan jika status saat ini 'Disetujui PA'.",
+                "operationId": "fa2d1f37c52ff32bc2ca9093b13a2bf2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID pengajuan cuti",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 2
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "admin_name"
+                                ],
+                                "properties": {
+                                    "admin_name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Admin BAAK"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status berhasil diubah",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Status cuti berhasil diubah menjadi Diterbitkan SK."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Status tidak memenuhi syarat perubahan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Status tidak dapat diubah. Status saat ini: Pending PA"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pengajuan tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pengajuan cuti tidak ditemukan."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Kesalahan server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Gagal menerbitkan SK cuti."
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Exception message"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Admin Cuti"
+                ],
+                "summary": "(12) Menghapus atau mengarsip data cuti",
+                "description": "Menghapus data cuti (soft delete jika menggunakan SoftDeletes) atau mengarsipkan dengan mengubah status menjadi 'Diarsipkan' serta mencatat alasan.",
+                "operationId": "2e9c479383478b469cbfbe3c2d7b7b8e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID pengajuan cuti",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "admin_name"
+                                ],
+                                "properties": {
+                                    "admin_name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Admin BAAK"
+                                    },
+                                    "alasan": {
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "Data uji coba (testing endpoint delete/arsip).",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Berhasil dihapus/diarsipkan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data cuti berhasil diarsipkan."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pengajuan tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pengajuan cuti tidak ditemukan."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Kesalahan server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Gagal menghapus/mengarsip data cuti."
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Exception message"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/penerbitan-sk": {
+            "post": {
+                "tags": [
+                    "Admin Cuti"
+                ],
+                "summary": "(11) Mengunggah atau mencatat SK Cuti Akademik",
+                "description": "Mencatat metadata SK dan/atau mengunggah file SK (pdf/jpg/jpeg/png max 5MB). Hanya untuk status 'Diterbitkan SK' atau 'Pending Aktif Kembali'.",
+                "operationId": "83ca4a19428c402fda506bb3809b0531",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "pengajuan_id",
+                                    "admin_name"
+                                ],
+                                "properties": {
+                                    "pengajuan_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "admin_name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Admin BAAK"
+                                    },
+                                    "nomor_sk": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "SK-BAAK/001/2026",
+                                        "nullable": true
+                                    },
+                                    "tanggal_sk": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-01-02",
+                                        "nullable": true
+                                    },
+                                    "catatan": {
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "SK sudah ditandatangani dan dicatat.",
+                                        "nullable": true
+                                    },
+                                    "sk_file": {
+                                        "description": "File SK (pdf/jpg/jpeg/png), maksimum 5MB",
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Berhasil dicatat/diunggah",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SK Cuti Akademik berhasil dicatat/diunggah."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "pengajuan_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "nomor_sk": {
+                                                    "type": "string",
+                                                    "example": "SK-BAAK/001/2026",
+                                                    "nullable": true
+                                                },
+                                                "tanggal_sk": {
+                                                    "type": "string",
+                                                    "example": "2026-01-02",
+                                                    "nullable": true
+                                                },
+                                                "sk_path": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "sk_url": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Status pengajuan tidak sesuai",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SK hanya dapat dicatat/diunggah untuk pengajuan dengan status Diterbitkan SK atau Pending Aktif Kembali. Status saat ini: Pending PA"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Pengajuan tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pengajuan cuti tidak ditemukan."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Kesalahan server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Gagal mencatat/mengunggah SK cuti."
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Exception message"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tagihan-cuti": {
+            "get": {
+                "tags": [
+                    "Admin Cuti"
+                ],
+                "summary": "(13) Mendapatkan data tagihan biaya Cuti Akademik",
+                "description": "Mengambil daftar pengajuan cuti yang memiliki biaya_cuti > 0 (jika kolom biaya_cuti digunakan).",
+                "operationId": "c28a013a8fc8b89bda28b56905c49900",
+                "responses": {
+                    "200": {
+                        "description": "Berhasil mengambil data tagihan cuti",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Data tagihan cuti berhasil diambil."
+                                        },
+                                        "total_data": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "mahasiswa_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "semester_cuti": {
+                                                        "type": "string",
+                                                        "example": "Ganjil 2026/2027"
+                                                    },
+                                                    "status_permohonan": {
+                                                        "type": "string",
+                                                        "example": "Pending PA"
+                                                    },
+                                                    "biaya_cuti": {
+                                                        "type": "number",
+                                                        "example": 1500000,
+                                                        "nullable": true
+                                                    },
+                                                    "mahasiswa": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "nim": {
+                                                                "type": "string",
+                                                                "example": "12345678"
+                                                            },
+                                                            "nama": {
+                                                                "type": "string",
+                                                                "example": "Budi Santoso"
+                                                            },
+                                                            "prodi": {
+                                                                "type": "string",
+                                                                "example": "Teknik Informatika"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tidak ada data tagihan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tidak ada data tagihan biaya cuti akademik."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
         "securitySchemes": {
-            "web": {
+            "csrfHeader": {
                 "type": "apiKey",
-                "description": "Gunakan otentikasi session berbasis cookie (Login ke aplikasi utama Laravel terlebih dahulu).",
-                "name": "XSRF-TOKEN",
-                "in": "cookie"
+                "description": "Untuk otentikasi CSRF, token diambil dari cookie 'XSRF-TOKEN' dan dikirim melalui header ini. Wajib untuk request POST, PUT, DELETE.",
+                "name": "X-XSRF-TOKEN",
+                "in": "header"
             }
         }
     },
     "tags": [
+        {
+            "name": "Authentication",
+            "description": "Endpoint untuk masuk ke sistem"
+        },
         {
             "name": "Mahasiswa",
             "description": "Fungsional Layanan untuk Pengajuan Cuti Mahasiswa"
@@ -597,12 +1213,16 @@
             "description": "Fungsional Layanan untuk Laporan Global Admin"
         },
         {
-            "name": "Authentication",
-            "description": "Authentication"
+            "name": "UAS",
+            "description": "Fungsional UAS - Mengonsumsi Public API TheMealDB"
         },
         {
             "name": "Dosen PA",
             "description": "Dosen PA"
+        },
+        {
+            "name": "Admin Cuti",
+            "description": "Admin Cuti"
         }
     ]
 }
