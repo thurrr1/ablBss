@@ -2,8 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CutiController;
+use App\Http\Controllers\Admin\AdminCutiController;
 
-Route::middleware('web')->group(function () {
+// Route::middleware('web')->group(function () {
     // 1. POST: Mengajukan permohonan Cuti Akademik baru
     Route::post('/pengajuan-cuti', [CutiController::class, 'ajukanCuti']);
 
@@ -19,13 +20,18 @@ Route::middleware('web')->group(function () {
     // 5. POST: Mengajukan permohonan untuk Aktif Kembali setelah masa cuti berakhir
     Route::post('/aktif-kembali', [CutiController::class, 'ajukanAktifKembali']);
 
+    // No. 14, 15 (Admin)
+    Route::get('/report/statistik-cuti', [CutiController::class, 'statistikCuti']);
+    Route::put('/admin/perpanjang-cuti/{id}', [CutiController::class, 'perpanjangCuti']);
+// });
+
+// Route::prefix('admin')->group(function () {
+    Route::get('/mahasiswa-cuti', [AdminCutiController::class, 'daftarMahasiswaCuti']);
+    Route::put('/status-cuti/{id}', [AdminCutiController::class, 'terbitkanSk']);
+
+
 Route::prefix('pa')->group(function () {
         Route::get('/pengajuan/pending', [CutiController::class, 'listPendingPA']);
         Route::put('/pengajuan/{id}/setujui', [CutiController::class, 'setujuiPA']);
         Route::put('/pengajuan/{id}/tolak', [CutiController::class, 'tolakPA']);
     });
-
-    // No. 14, 15 (Admin)
-    Route::get('/report/statistik-cuti', [CutiController::class, 'statistikCuti']);
-    Route::put('/admin/perpanjang-cuti/{id}', [CutiController::class, 'perpanjangCuti']);
-});

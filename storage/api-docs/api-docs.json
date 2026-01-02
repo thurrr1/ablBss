@@ -293,6 +293,288 @@
                     }
                 }
             }
+        },
+        "/api/pa/pengajuan/pending": {
+            "get": {
+                "tags": [
+                    "Dosen PA"
+                ],
+                "summary": "Mendapatkan daftar pengajuan cuti status Pending PA",
+                "description": "Mengambil semua data pengajuan cuti mahasiswa bimbingan yang menunggu verifikasi.",
+                "operationId": "listPendingPA",
+                "parameters": [
+                    {
+                        "name": "PA-ID",
+                        "in": "header",
+                        "description": "ID Dosen PA yang sedang login (Simulasi)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar pengajuan berhasil diambil.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Daftar pengajuan cuti menunggu verifikasi PA berhasil diambil."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/pa/pengajuan/{id}/setujui": {
+            "put": {
+                "tags": [
+                    "Dosen PA"
+                ],
+                "summary": "Menyetujui permohonan cuti (Approve)",
+                "description": "Fungsional Layanan 7: Menyetujui permohonan Cuti Mahasiswa\n* @OA\\Put(\npath=\"/api/pa/pengajuan/{id}/setujui\",\noperationId=\"setujuiPA\",\ntags={\"Dosen PA\"},\nsummary=\"Menyetujui permohonan cuti (Approve)\",",
+                "operationId": "setujuiPA",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Pengajuan Cuti",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "PA-ID",
+                        "in": "header",
+                        "description": "ID Dosen PA yang melakukan persetujuan",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Permohonan berhasil disetujui.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Permohonan cuti disetujui oleh PA."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Gagal: Status pengajuan bukan Pending PA."
+                    }
+                }
+            }
+        },
+        "/api/pa/pengajuan/{id}/tolak": {
+            "put": {
+                "tags": [
+                    "Dosen PA"
+                ],
+                "summary": "Menolak permohonan cuti (Reject)",
+                "description": "Fungsional Layanan 8: Menolak permohonan Cuti\n* @OA\\Put(\npath=\"/api/pa/pengajuan/{id}/tolak\",\noperationId=\"tolakPA\",\ntags={\"Dosen PA\"},\nsummary=\"Menolak permohonan cuti (Reject)\",",
+                "operationId": "tolakPA",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Pengajuan Cuti",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "PA-ID",
+                        "in": "header",
+                        "description": "ID Dosen PA yang menolak",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "catatan"
+                                ],
+                                "properties": {
+                                    "catatan": {
+                                        "description": "Alasan penolakan",
+                                        "type": "string",
+                                        "example": "Dokumen kurang lengkap, mohon lengkapi surat dokter."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Permohonan berhasil ditolak.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Permohonan cuti ditolak oleh PA."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validasi gagal (Catatan wajib diisi)."
+                    }
+                }
+            }
+        },
+        "/api/report/statistik-cuti": {
+            "get": {
+                "tags": [
+                    "Admin Global"
+                ],
+                "summary": "Melihat statistik jumlah pengajuan cuti berdasarkan status",
+                "description": "Fungsional Layanan 14: Mendapatkan data statistik Cuti\n* @OA\\Get(\npath=\"/api/report/statistik-cuti\",\noperationId=\"statistikCuti\",\ntags={\"Admin Global\"},\nsummary=\"Melihat statistik jumlah pengajuan cuti berdasarkan status\",",
+                "operationId": "statistikCuti",
+                "responses": {
+                    "200": {
+                        "description": "Statistik berhasil diambil.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Statistik pengajuan cuti berhasil diambil."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "status_permohonan": {
+                                                        "type": "string",
+                                                        "example": "Pending PA"
+                                                    },
+                                                    "total": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/perpanjang-cuti/{id}": {
+            "put": {
+                "tags": [
+                    "Admin Global"
+                ],
+                "summary": "Memperpanjang durasi cuti (Admin)",
+                "description": "Fungsional Layanan 15: Memproses perpanjangan masa cuti\n* @OA\\Put(\npath=\"/api/admin/perpanjang-cuti/{id}\",\noperationId=\"perpanjangCuti\",\ntags={\"Admin Global\"},\nsummary=\"Memperpanjang durasi cuti (Admin)\",",
+                "operationId": "perpanjangCuti",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Pengajuan Cuti",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tambah_semester"
+                                ],
+                                "properties": {
+                                    "tambah_semester": {
+                                        "description": "Jumlah semester yang ditambahkan",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Masa cuti berhasil diperpanjang.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Masa cuti berhasil diperpanjang."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Gagal: Status pengajuan belum Diterbitkan SK."
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -317,6 +599,10 @@
         {
             "name": "Authentication",
             "description": "Authentication"
+        },
+        {
+            "name": "Dosen PA",
+            "description": "Dosen PA"
         }
     ]
 }
