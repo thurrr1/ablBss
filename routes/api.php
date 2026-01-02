@@ -28,7 +28,10 @@ use App\Http\Controllers\Admin\AdminCutiController;
 // Route::prefix('admin')->group(function () {
     Route::get('/mahasiswa-cuti', [AdminCutiController::class, 'daftarMahasiswaCuti']);
     Route::put('/status-cuti/{id}', [AdminCutiController::class, 'terbitkanSk']);
-
+    Route::post('/penerbitan-sk', [AdminCutiController::class, 'penerbitanSk']);
+    Route::delete('/status-cuti/{id}', [AdminCutiController::class, 'hapusAtauArsipCuti']);
+    Route::get('/tagihan-cuti', [AdminCutiController::class, 'daftarTagihanCuti']);
+// });
 
 Route::prefix('pa')->group(function () {
         Route::get('/pengajuan/pending', [CutiController::class, 'listPendingPA']);
